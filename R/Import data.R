@@ -31,6 +31,7 @@ SP_milieux = as.data.frame(matrix(0,
                                  dimnames = list(SPdata$Nom, milieux)))
 SP_milieux$milieux = SPdata$Milieux
 SP_milieux$projet = SPdata$Nom
+SP_milieux$partenaires = SPdata$Partenaires
 SP_milieux$def = SPdata$`Résumé de l'observatoire`
 
 # Caractériser le type de programme: Effort
@@ -105,4 +106,5 @@ type_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
 )
 
 
-# 3/ Une carte des régions de France avec un gradient de couleur en fonction du nombre de programme par région + sur chaque région un donut qui représente la part de programmes locaux, départementaux ou régionaux (inclure les outremer). Mais pour cette représentation on avait dit qu'on voyait plutôt avec Simon et/ou Charles.
+# 3/ Sankey diagram entre taxons et milieux
+
