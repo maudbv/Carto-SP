@@ -1,97 +1,101 @@
-# Import data
+# Import data 
 
+library(dplyr)
+library(tidyr)
 library(readr)
 library(ggplot2)
 library(igraph)
 library(networkD3)
 library(visNetwork)
-library(dplyr)
 library(stringr)
 library(readxl)
 library(RColorBrewer)
 
-# read data
-SPdata <- read_csv("data/carto analytique.csv")
+# read data ####
+SPdata <- read_excel(path = "data/carto_analytique.xlsx",
+                     sheet = "Tableau Maud")
 
 
-# Données pour les graph Habitats et themes ####
-# 1/ Une représentation centrée sur les sujets d'étude. Croiser la colonne type de programme (inventaire, suivi, signalement, recueil  / on avait parlé d'un code couleur) avec les milieux étudiés (colonne "thèmes"). Et éventuellement avoir une autre représentation type de programme / taxon.
+# Données pour les graph par milieux ####
+# 1/ Une représentation centrée sur les milieux. 
+# Croiser la colonne type de programme pour code couleur
+milieux = unique(unlist(str_split(SPdata$Milieux, pattern = ", ")))
 
+# Corriger les espaces supplémentaires: 
+milieux = unique(str_trim(milieux))
 
-themes = unique(unlist(str_split(SPdata$Thèmes, pattern = " , ")))
-habitats = c("Mer & littoral","Terres agricoles","En forêt","En campagne","En montagne","En ville","Eaux intérieures")
-questions = c("Espèces envahissantes" ,"Changement climatique","Parcs & jardins", "Espaces protégés","Espèces en danger")
-
-# ajouter les habitats pour 4 projets: 
-SPdata[ SPdata$Nom %in% c(
-  "Base de données de l'Observatoire Mutualisé de la BIodiversité et de la NAture BOMBINA",
-     "Nos Jardins à La Loupe", 
-     "AGIIR",
-     "Enquête hirondelles et martinets - Cotentin et Bessin"), "Thèmes" ] = "En montagne , En forêt , Mer & littoral , Eaux intérieures , En ville , Parcs & jardins , Terres agricoles , En campagne"
-
-# Table pour résumer les thèmes
-SP_themes = as.data.frame(matrix(0,
+# Table pour résumer les milieux
+SP_milieux = as.data.frame(matrix(0,
                                  nrow(SPdata),
-                                 length(themes),
-                                 dimnames = list(SPdata$Nom, themes)))
-SP_themes$themes = SPdata$Thèmes
-SP_themes$projet = SPdata$Nom
-SP_themes$def = SPdata$`Résumé de l'observatoire`
-SP_themes$type_prog = SPdata$`Type de programme`
+                                 length(milieux),
+                                 dimnames = list(SPdata$Nom, milieux)))
+SP_milieux$milieux = SPdata$Milieux
+SP_milieux$projet = SPdata$Nom
+SP_milieux$def = SPdata$`Résumé de l'observatoire`
+
+# Caractériser le type de programme: Effort
+SP_milieux$type_prog = SPdata$Effort
 
 # Fill the indicence matrix:
-for (i in themes) {
-  SP_themes[grep(i, SP_themes$themes), i] = 1
+for (i in milieux) {
+  SP_milieux[grep(i, SP_milieux$milieux), i] = 1
 }
 
+# Matrice d'incidence pour les milieux: 
+SP_milieux = SP_milieux %>%
+  select(all_of(milieux), projet, def, type_prog)
 
-# Matrice d'incidence pour les habitats: 
-SP_habitats = SP_themes %>%
-  select(all_of(habitats), projet, def, type_prog)
+# Données pour une représentation centrée sur les acteurs mobilisés. ####
 
-# Matrice d'incidence pour les habitats: 
-SP_questions = SP_themes %>%
-  select(all_of(questions), projet, def, type_prog)
+# importer le tableau classifiant les acteurs
+data_acteurs <- as.data.frame(read_excel("data/carto_analytique.xlsx",
+                                    sheet = "Index acteurs") )
+types_acteurs <- names(data_acteurs)[-c(1,2)]
 
-# 2/ Une représentation centrée sur les acteurs mobilisés. ####
-# Relier chaque programme avec les types d'acteurs impliqués (ceux mentionnés dans les colonnes "nom de la structure animatrice" et "responsable scientifique") que l'on classe en 5 grands types (cf index acteurs : académique, associatif, gestionnaire d'espaces, collectivité, entreprise). Et indiquer par un code couleur le type de participants impliqués dans chaque programme (colonne J)
+# Convertir en 0 et 1: 
+data_acteurs[data_acteurs == "x"] <- 1
+data_acteurs[is.na(data_acteurs)] <- 0
 
-## importer le tableau classifiant les acteurs ####
-acteurs <- as.data.frame(read_excel("data/carto analytique.xlsx", sheet = "Index acteurs") )
+# Restreindre aux noms simplifiés: 
+data_acteurs <- data_acteurs %>%
+  select(-1) %>%
+  unique()
 
-##  extraire les types d'acteurs: ####
-types_act <- names(acteurs)[2:6]
+# Extraire type d'acteur unique:
+data_acteurs <- pivot_longer(data = data_acteurs,
+             cols = types_acteurs) %>%
+  filter(value == 1) %>%
+  select(-value)
 
-## rendre les données numériques: ####
-acteurs[acteurs == "x"] <- 1
-acteurs[is.na(acteurs)] <- 0
-acteurs <- acteurs %>%
-  mutate(across(all_of(types_act) , as.numeric))
+# Table pour résumer les types d'acteurs pour chaque programme
+SP_acteurs = as.data.frame(matrix(0,
+                                  nrow(SPdata),
+                                  length(types_acteurs),
+                                  dimnames = list(SPdata$Nom, 
+                                                  types_acteurs)))
+SP_acteurs$acteurs = SPdata$Partenaires
+SP_acteurs$projet = SPdata$Nom
+SP_acteurs$def = SPdata$`Résumé de l'observatoire`
 
+# Caractériser le type de programme: Effort
+SP_acteurs$type_part = SPdata$`Type participants`
 
-## Compter les types d'acteurs pour chaque projet de SP: ####
+# Fill the indicence matrix:
+for (i in 1:nrow(data_acteurs)) {
+ act = data_acteurs[i, "Nom_simple"]
+ type = as.character(data_acteurs[i, "name"])
+ lines = grep(act, SP_acteurs$acteurs)
+ if (length(lines)>0) {
+ previous_values = SP_acteurs[lines,type]
+ SP_acteurs[lines,type] = previous_values + 1
+ rm(previous_values)
+ }
+}
 
-# types de structure animatrice
-x1 = acteurs[match(SPdata$`Nom de la structure animatrice`,
-                   acteurs$`Nom de la structure animatrice`),
-             types_act ] 
-x1[is.na(x1)] <- 0
-
-# type de structure scientifique
-x2 = acteurs[match(SPdata$`Structure responsable scientifique`,
-                   acteurs$`Nom de la structure animatrice`),
-             types_act ]
-x2[is.na(x2)] <- 0
-
-## Additionner les deux: ####
-SP_acteurs <- as.data.frame(SPdata %>%
-                              select(Nom,`Type participants`, `Résumé de l'observatoire` ) %>%
-                              cbind(., x1 + x2))
-
-rownames(SP_acteurs) = SP_acteurs$Nom
+rownames(SP_acteurs) = SP_acteurs$projet
 
 # Simplifier nom des participants:
-type_part = data.frame(long = levels (as.factor(SP_acteurs$`Type participants`)),
+type_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
                        court  = c("Grand Public",
                                   "Naturalistes bénévoles",
                                   "Professionnels espaces naturels",
@@ -99,5 +103,6 @@ type_part = data.frame(long = levels (as.factor(SP_acteurs$`Type participants`))
                                   "Professionnels agricole",
                                   "Scolaires")
 )
+
 
 # 3/ Une carte des régions de France avec un gradient de couleur en fonction du nombre de programme par région + sur chaque région un donut qui représente la part de programmes locaux, départementaux ou régionaux (inclure les outremer). Mais pour cette représentation on avait dit qu'on voyait plutôt avec Simon et/ou Charles.
