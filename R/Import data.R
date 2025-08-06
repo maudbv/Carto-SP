@@ -1,15 +1,9 @@
 # Import data 
-
 library(dplyr)
 library(tidyr)
 library(readr)
-library(ggplot2)
-library(igraph)
-library(networkD3)
-library(visNetwork)
 library(stringr)
 library(readxl)
-library(RColorBrewer)
 
 # read data ####
 SPdata <- read_excel(path = "data/carto_analytique.xlsx",
@@ -34,17 +28,14 @@ SP_milieux$projet = SPdata$Nom
 SP_milieux$partenaires = SPdata$Partenaires
 SP_milieux$def = SPdata$`Résumé de l'observatoire`
 
-# Caractériser le type de programme: Effort
+# Caractériser le type de projet
 SP_milieux$type_prog = SPdata$Effort
+SP_milieux$type_participants = SPdata$`Type participants`
 
 # Fill the indicence matrix:
 for (i in milieux) {
   SP_milieux[grep(i, SP_milieux$milieux), i] = 1
 }
-
-# Matrice d'incidence pour les milieux: 
-SP_milieux = SP_milieux %>%
-  select(all_of(milieux), projet, def, type_prog)
 
 # Données pour une représentation centrée sur les acteurs mobilisés. ####
 
@@ -74,18 +65,18 @@ SP_acteurs = as.data.frame(matrix(0,
                                   length(types_acteurs),
                                   dimnames = list(SPdata$Nom, 
                                                   types_acteurs)))
-SP_acteurs$acteurs = SPdata$Partenaires
+SP_acteurs$partenaires = SPdata$Partenaires
 SP_acteurs$projet = SPdata$Nom
 SP_acteurs$def = SPdata$`Résumé de l'observatoire`
 
 # Caractériser le type de programme: Effort
-SP_acteurs$type_part = SPdata$`Type participants`
+SP_acteurs$type_participants = SPdata$`Type participants`
 
-# Fill the indicence matrix:
+# Fill the incidence matrix:
 for (i in 1:nrow(data_acteurs)) {
- act = data_acteurs[i, "Nom_simple"]
+ act = as.character(data_acteurs[i, "Nom_simple"])
  type = as.character(data_acteurs[i, "name"])
- lines = grep(act, SP_acteurs$acteurs)
+ lines = grep(act, SP_acteurs$partenaires)
  if (length(lines)>0) {
  previous_values = SP_acteurs[lines,type]
  SP_acteurs[lines,type] = previous_values + 1
@@ -96,7 +87,7 @@ for (i in 1:nrow(data_acteurs)) {
 rownames(SP_acteurs) = SP_acteurs$projet
 
 # Simplifier nom des participants:
-type_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
+types_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
                        court  = c("Grand Public",
                                   "Naturalistes bénévoles",
                                   "Professionnels espaces naturels",
