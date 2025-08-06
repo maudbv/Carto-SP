@@ -30,6 +30,15 @@ graph_milieux <- carto_SP_graph(df = SP_milieux,
                                 titre = "Milieux explorés par les projets de sciences participatives",
                                 hauteur = "600px")
                                 
+# Graph bonus: Projets et Taxons
+graph_taxons <- carto_SP_graph(df = SP_taxons,
+                                groupes_col = taxons,
+                                groupes_titre = "Taxons",
+                                couleurs_col = "type_participants",
+                                couleurs_label = types_part$court,
+                                titre = "Taxons représentés par les projets de sciences participatives",
+                                hauteur = "600px")
+
                             
 # Graph 2: Projets et partenaires
 graph_partenaires <- carto_SP_graph(df = SP_acteurs,

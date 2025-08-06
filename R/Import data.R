@@ -6,17 +6,38 @@ library(stringr)
 library(readxl)
 library(networkD3)
 
-
 # read data ####
 SPdata <- read_excel(path = "data/carto_analytique.xlsx",
                      sheet = "Tableau Maud")
 
 
+# Taxons ####
+SP_taxons = col2matrix(df = SPdata, 
+                       column = "Taxons",
+                       name_col = "Nom",
+                       sep = ",", 
+                       id_cols = c("Milieux","Taxons",
+                                   "Partenaires", "Type participants",
+                                   "Résumé de l'observatoire"),
+                       id_cols_new = c("milieux","taxons",
+                                       "partenaires", "type_participants",
+                                       "def"))
+taxons = SP_taxons$objects
+SP_taxons = SP_taxons$data
+
+# Nouveaux Taxons
+data_taxons <- as.data.frame(read_excel("data/carto_analytique.xlsx",
+                                        sheet = "Index taxons") )
+
+SPdata$Taxons_corrected <- change_taxonomy(df = SPdata,
+                                           col = "Taxons",
+                                           index = data_taxons ,
+                                           col_init = "TAXONS TABLEAU",
+                                           col_finale = "TAXONS FINAUX") 
+
+
+
 # Milieux ####
-# 1/ Une représentation centrée sur les milieux. 
-# Croiser la colonne type de programme pour code couleur
-
-
 SP_milieux = col2matrix(df = SPdata, 
                        column = "Milieux",
                        name_col = "Nom",
@@ -26,53 +47,11 @@ SP_milieux = col2matrix(df = SPdata,
                                    "Résumé de l'observatoire"),
                        id_cols_new = c( "taxons",
                                        "partenaires", "type_participants",
-                                       "def")
-)
-
+                                       "def"))
 milieux = SP_milieux$objects
 SP_milieux = SP_milieux$data
 
-# 
-# 
-# milieux = unique(unlist(str_split(SPdata$Milieux, pattern = ", ")))
-# 
-# # Corriger les espaces supplémentaires: 
-# milieux = unique(str_trim(milieux))
-# 
-# # Table pour résumer les milieux
-# SP_milieux = as.data.frame(matrix(0,
-#                                  nrow(SPdata),
-#                                  length(milieux),
-#                                  dimnames = list(SPdata$Nom, milieux)))
-# SP_milieux$milieux = SPdata$Milieux
-# SP_milieux$projet = SPdata$Nom
-# SP_milieux$partenaires = SPdata$Partenaires
-# SP_milieux$def = SPdata$`Résumé de l'observatoire`
-# 
-# # Caractériser le type de projet
-# SP_milieux$type_prog = SPdata$Effort
-# SP_milieux$type_participants = SPdata$`Type participants`
-# 
-# # Fill the indicence matrix:
-# for (i in milieux) {
-#   SP_milieux[grep(i, SP_milieux$milieux), i] = 1
-# }
 # Taxons ####
-
-SP_taxons = col2matrix(df = SPdata, 
-                        column = "Taxons",
-                        name_col = "Nom",
-                        sep = ",", 
-                       id_cols = c("Milieux","Taxons",
-                                        "Partenaires", "Type participants",
-                                        "Résumé de l'observatoire"),
-                       id_cols_new = c("milieux","taxons",
-                                   "partenaires", "type participants",
-                                   "def")
-                       )
-
-taxons = SP_taxons$objects
-SP_taxons = SP_taxons$data
 
 # Acteurs ####
 
@@ -132,6 +111,3 @@ types_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
                                    "Professionnels agricole",
                                    "Scolaires")
 )
-
-
-
