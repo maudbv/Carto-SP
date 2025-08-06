@@ -11,6 +11,10 @@ library(stringr)
 library(readxl)
 library(RColorBrewer)
 
+
+# Load functions
+source("R/function col2matrix.r")
+
 # Importer et formatter les données
 source("R/Import data.r")
 
