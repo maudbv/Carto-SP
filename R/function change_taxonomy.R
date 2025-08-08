@@ -6,20 +6,22 @@ change_taxonomy = function (df = SPdata,
                             col_init = "TAXONS TABLEAU",
                             col_finale = "TAXONS FINAUX") {
   
-# extract column to update
-l = df[,col]
+  colonne = as.data.frame(df)[, col]
+  
+  # Étape 1 : créer un vecteur de correspondance
+  dico <- setNames(index[, col_finale], index[, col_init])
+  
+  # Étape 2 : fonction pour corriger une cellule
+  corriger_cellule <- function(cellule) {
+    noms <- trimws(unlist(strsplit(cellule, ",")))              # séparer et nettoyer
+    noms_corriges <- dico[noms]                                 # remplacements
+    noms_corriges <- unique(na.omit(noms_corriges))             # enlever NA et doublons
+    paste(noms_corriges, collapse = ", ")                       # reformater
+  }
+  
+  # Étape 3 : appliquer à toute la colonne
+  colonne_corrigee <- sapply(colonne, corriger_cellule)
 
-# For each element of the index:
-for (i in 1:nrow(index)) {
-
-  l = sapply(l, FUN = function(m) {
-    # Search for the old name and replace by new
-    gsub(pattern = index[i,col_init],
-           replacement = index[i,col_finale],
-             x = m)
-  })
-}
-# Return a corrected column (vector)
-return(l)
-}
+  return(colonne_corrigee)
+ }
 

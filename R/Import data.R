@@ -1,57 +1,60 @@
-# Import data 
-library(dplyr)
-library(tidyr)
-library(readr)
-library(stringr)
-library(readxl)
-library(networkD3)
+# Importation et traintement des données
+require(dplyr)
+require(tidyr)
+require(readr)
+require(stringr)
+require(readxl)
 
-# read data ####
+# import main data table ####
 SPdata <- read_excel(path = "data/carto_analytique.xlsx",
                      sheet = "Tableau Maud")
 
 
 # Taxons ####
-SP_taxons = col2matrix(df = SPdata, 
-                       column = "Taxons",
-                       name_col = "Nom",
-                       sep = ",", 
-                       id_cols = c("Milieux","Taxons",
-                                   "Partenaires", "Type participants",
-                                   "Résumé de l'observatoire"),
-                       id_cols_new = c("milieux","taxons",
-                                       "partenaires", "type_participants",
-                                       "def"))
-taxons = SP_taxons$objects
-SP_taxons = SP_taxons$data
 
-# Nouveaux Taxons
+# Remplacer les taxons par de une nouvelle taxonomie plus simple
 data_taxons <- as.data.frame(read_excel("data/carto_analytique.xlsx",
                                         sheet = "Index taxons") )
 
+# Nouvelle colonne avec les taxons 
 SPdata$Taxons_corrected <- change_taxonomy(df = SPdata,
                                            col = "Taxons",
                                            index = data_taxons ,
                                            col_init = "TAXONS TABLEAU",
                                            col_finale = "TAXONS FINAUX") 
 
+# Créer la matrice d'incidence des taxons par projets:
+SP_taxons = col2presence(df = SPdata,
+                         colonne = "Taxons_corrected",
+                         colonnes_a_garder = c("Nom", "Milieux","Taxons_corrected",
+                                               "Partenaires", "Type participants",
+                                               "Résumé de l'observatoire"),
+                         nouveaux_noms = c("Nom_projet", "milieux","taxons",
+                                           "partenaires", "type_participants",
+                                           "def"),
+                         binaire = TRUE,
+                         rename_rows = "Nom_projet")
+  
+# Garder la liste des taxons uniques:
+taxons = SP_taxons$objects
+
+# Extraire uniquement le tableau de données:
+SP_taxons = SP_taxons$data
 
 
 # Milieux ####
-SP_milieux = col2matrix(df = SPdata, 
-                       column = "Milieux",
-                       name_col = "Nom",
-                       sep = ",", 
-                       id_cols = c( "Taxons",
-                                   "Partenaires", "Type participants",
-                                   "Résumé de l'observatoire"),
-                       id_cols_new = c( "taxons",
-                                       "partenaires", "type_participants",
-                                       "def"))
+SP_milieux = col2presence(df = SPdata,
+                          colonne = "Milieux",
+                          colonnes_a_garder = c("Nom", "Milieux","Taxons_corrected",
+                                                "Partenaires", "Type participants",
+                                                "Résumé de l'observatoire"),
+                          nouveaux_noms = c("Nom_projet", "milieux","taxons",
+                                            "partenaires", "type_participants",
+                                            "def"),
+                          binaire = TRUE,
+                          rename_rows = "Nom_projet")
 milieux = SP_milieux$objects
 SP_milieux = SP_milieux$data
-
-# Taxons ####
 
 # Acteurs ####
 
@@ -66,7 +69,7 @@ data_acteurs[is.na(data_acteurs)] <- 0
 
 # Restreindre aux noms simplifiés: 
 data_acteurs <- data_acteurs %>%
-  select(-1) %>%
+  select(-'Nom de la structure animatrice') %>%
   unique()
 
 # Extraire type d'acteur unique:
@@ -82,7 +85,7 @@ SP_acteurs = as.data.frame(matrix(0,
                                   dimnames = list(SPdata$Nom, 
                                                   types_acteurs)))
 SP_acteurs$partenaires = SPdata$Partenaires
-SP_acteurs$projet = SPdata$Nom
+SP_acteurs$Nom_projet = SPdata$Nom
 SP_acteurs$def = SPdata$`Résumé de l'observatoire`
 
 # Caractériser le type de programme: Effort
@@ -100,7 +103,7 @@ for (i in 1:nrow(data_acteurs)) {
   }
 }
 
-rownames(SP_acteurs) = SP_acteurs$projet
+rownames(SP_acteurs) = SP_acteurs$Nom_projet
 
 # Simplifier nom des participants:
 types_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
@@ -111,3 +114,5 @@ types_part = data.frame(long = levels (as.factor(SP_acteurs$type_part)),
                                    "Professionnels agricole",
                                    "Scolaires")
 )
+
+

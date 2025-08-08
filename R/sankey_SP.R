@@ -9,31 +9,29 @@
 #               Chaque cellule est numérique et représente l'épaisseur des liens dans les graphe.
 # groupes_droite:  Titre à utiliser pour désigner groupements
 
-carto_SP_graph = function(df = SPdata,
-                          groupes_gauche = "Milieux",
-                          groupes_droite = "Taxons"
+sankey_SP = function(marginal_table = NULL,
+                     df = NULL,
+                     gauche = NULL,
+                     droite = NULL
                          ) {
 require(tidyr)
 require(dplyr)
 require(networkD3)
   
+if (is.null(marginal_table)) {
 # Créer la matrice de comptage: 
-x = table(df$Effort, df$`Strategie d'echantillonnage`)
-
+  df = as.data.frame(df)
+  marginal_table = as.matrix(table(df[,gauche], df[,droite]))
+}
   
    
 # build the igraph object ####
 graph <- graph_from_biadjacency_matrix( 
-  x, 
+  marginal_table, 
   weighted = TRUE,
   directed = TRUE,
   multiple = FALSE,
   mode = "out")
-
-if (length(couleurs_label) == 0 ) {
-  couleurs_label = levels(as.factor(df[, couleurs_col]))
-}
-                                                   
 
 # Graph for NetworkD3 #####
 N = data.frame(name = V(graph)$name)

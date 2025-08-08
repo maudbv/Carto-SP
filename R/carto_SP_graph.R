@@ -57,14 +57,14 @@ nodes_proj$style = factor(x = nodes_proj$style,
 
 # add info about nodes
 nodes_proj$def <- NA
-nodes_proj[match(df$projet, nodes_proj$name),"def"] <-
-  df[na.omit(match(nodes_proj$name, df$projet)),"def"]
+nodes_proj[match(df$Nom_projet, nodes_proj$name),"def"] <-
+  df[na.omit(match(nodes_proj$name, df$Nom_projet)),"def"]
 nodes_proj$def[ nodes_proj$type] <- ""
 
 # info partenaires
 nodes_proj$partenaires <- NA
-nodes_proj[match(df$projet, nodes_proj$name),"partenaires"] <-
-  df[na.omit(match(nodes_proj$name, df$projet)),"partenaires"]
+nodes_proj[match(df$Nom_projet, nodes_proj$name),"partenaires"] <-
+  df[na.omit(match(nodes_proj$name, df$Nom_projet)),"partenaires"]
 nodes_proj$partenaires[ nodes_proj$type] <- ""
 
 # colors ####
