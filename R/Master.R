@@ -32,7 +32,7 @@ graph_milieux <- carto_SP_graph(df = SP_milieux,
                                 titre = "Milieux explorés par les projets de sciences participatives",
                                 hauteur = "600px")
 
-
+graph_milieux 
 # Graph bonus: Projets et Taxons ####
 graph_taxons <- carto_SP_graph(df = SP_taxons,
                                 groupes_col = taxons,
@@ -42,7 +42,7 @@ graph_taxons <- carto_SP_graph(df = SP_taxons,
                                 titre = "Taxons représentés par les projets de sciences participatives",
                                 hauteur = "600px")
 
-                            
+graph_taxons                            
 # Graph 2: Projets et partenaires ####
 graph_partenaires <- carto_SP_graph(df = SP_acteurs,
                                 groupes_col = types_acteurs,
@@ -53,7 +53,7 @@ graph_partenaires <- carto_SP_graph(df = SP_acteurs,
                                 selection_titre = "Type de participants",
                                 titre = "Cartographie des partenaires des projets de sciences participatives",
                                 hauteur = "800px")
-
+graph_partenaires
 # Graph 3: Sankey diagram taxons et milieux : aléatoire, bof ####
 
 # Matrice de comptage
