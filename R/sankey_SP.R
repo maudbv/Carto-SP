@@ -20,14 +20,23 @@ require(networkD3)
   
 if (is.null(marginal_table)) {
 # Créer la matrice de comptage: 
-  df = as.data.frame(df)
-  marginal_table = as.matrix(table(df[,gauche], df[,droite]))
+  df = data.frame(gauche = df[,gauche],
+                  droite = df[,droite])
+  colnames(df) = c("gauche", "droite")
+  marginal_table = df %>%
+    count(gauche,droite,.drop = TRUE) %>%
+    pivot_wider(names_from = droite,
+                values_from = n, values_fill = 0) %>%
+    select(-1) %>%
+    as.matrix() 
+    rownames(marginal_table) = unique(df$gauche)
 }
   
    
 # build the igraph object ####
+  mat = as.matrix(marginal_table)
 graph <- graph_from_biadjacency_matrix( 
-  marginal_table, 
+  mat, 
   weighted = TRUE,
   directed = TRUE,
   multiple = FALSE,

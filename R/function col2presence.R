@@ -4,7 +4,7 @@ col2presence <- function(df = SPdata,
                          colonnes_a_garder = NULL,
                          nouveaux_noms = NULL,
                          binaire = TRUE,
-                         rename_rows = "Nom") {
+                         rename_rows = "Nom_projet") {
   
     # Vérifier si la colonne existe
     if (!colonne %in% names(df)) {
@@ -13,6 +13,7 @@ col2presence <- function(df = SPdata,
     
     # Séparer les éléments dans la colonne cible
     listes <- lapply(strsplit(df[[colonne]], ","), function(x) trimws(x))
+    names(listes) = df$Nom
     
     # Obtenir tous les éléments uniques
     elements_uniques <- sort(unique(unlist(listes)))
@@ -23,12 +24,13 @@ col2presence <- function(df = SPdata,
       as.integer(table_fact)
     }))
     
+    # Renomer les colonnes
+    colnames(matrice_occurrence) <- elements_uniques
+     
   if (binaire) {
     # Transformer en data.frame binaire (présence = 1, absence = 0)
     df_presence <- as.data.frame((matrice_occurrence > 0) * 1)
   }
-    # Renomer les colonnes
-    colnames(df_presence) <- elements_uniques
   
     # Garder les colonnes demandées (si précisé)
     if (!is.null(colonnes_a_garder)) {

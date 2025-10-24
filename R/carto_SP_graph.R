@@ -16,13 +16,17 @@ carto_SP_graph = function(df = SP_acteurs,
                           groupes_col = types_acteurs,
                           groupes_titre = "Type de partenaires",
                           couleurs_col = "type_participants",
-                          couleurs_label = NULL,
+                          couleurs_label = types_part$court,
+                          selection_col = "type_participants",
+                          selection_titre = "Type de participants",
                           titre = "",
                           hauteur = "600px") {
-
+  
 # build the igraph object ####
+  mat = as.matrix(dplyr::select(df, any_of(groupes_col)))
+
 graph2 <- graph_from_biadjacency_matrix( 
-  select(df, any_of(groupes_col)), 
+  mat, 
   weighted = TRUE,
   directed = TRUE,
   multiple = FALSE,
@@ -66,6 +70,13 @@ nodes_proj$partenaires <- NA
 nodes_proj[match(df$Nom_projet, nodes_proj$name),"partenaires"] <-
   df[na.omit(match(nodes_proj$name, df$Nom_projet)),"partenaires"]
 nodes_proj$partenaires[ nodes_proj$type] <- ""
+
+# info partenaires
+nodes_proj$selection <- NA
+nodes_proj[match(df$Nom_projet, nodes_proj$name),"selection"] <-
+  df[na.omit(match(nodes_proj$name, df$Nom_projet)),selection_col]
+nodes_proj$selection[nodes_proj$type] <- ""
+
 
 # colors ####
 styles_col = data.frame( style = levels(nodes_proj$style) ,
@@ -112,12 +123,9 @@ edges_proj$width <- (E(graph2)$weight * 1.5)^1.5
 
 
 # plot ####
-plot_hyp_trait_network <- function(n = nodes_proj,
-                                   e = edges_proj) {
-  
   p <- visNetwork::visNetwork(
-    n ,
-    e,
+    nodes_proj ,
+    edges_proj,
     height = hauteur,
     width = "100%",
     main = list(
@@ -125,32 +133,33 @@ plot_hyp_trait_network <- function(n = nodes_proj,
       style = "font-family:Arial;color:'black';font-size:18px;
       text-align:center;text-align:center; max-width:800px;
       margin: auto; word-break: break-word; line-height: 1.4'")) %>%
+  
     visNodes(
       font = list(size = 60)
     ) %>%
-    
+
     visEdges(
       shadow = FALSE,
       color = list(color = "darkgrey", highlight = "#C62F4B")
     ) %>%
+  
     visOptions(highlightNearest = list(enabled = T, degree = 1, hover = T),
                autoResize = FALSE,
-               selectedBy = list(variable = "name", 
+               selectedBy = list(variable =  "selection", 
                                  multiple = FALSE,
                                  highlight = TRUE,
-                                 main = "Projets",
-                                 values = nodes_proj$name[which(nodes_proj$layer ==1)]
+                                 main =  selection_titre,
+                                 values = unique(nodes_proj$selection[which(nodes_proj$layer ==1)])
                ),
                manipulation = FALSE) %>%
+  
     visPhysics(enabled = FALSE) %>%
+  
     visInteraction(navigationButtons = FALSE) %>%
+  
     visIgraphLayout(layout = "layout.fruchterman.reingold",
                     type = "full") 
   
-  return(p)
-  
-} 
-
 # Legend nodes ####
 lnodes <- data.frame(label = styles_col$label[1:6], 
                      shape =  "square",
@@ -162,7 +171,7 @@ lnodes <- data.frame(label = styles_col$label[1:6],
                                   align = "left")) 
 
 
-(p <- plot_hyp_trait_network () %>%
+p <- p %>%
     visInteraction(tooltipStyle = 'position: fixed; text-align: left; visibility:hidden;padding: 5px;font-family: verdana;font-size:14px;font-color:#00000;
                    background-color: white;-moz-border-radius: 3px;*-webkit-border-radius: 3px;border-radius: 3px; border: 1px solid #808074;
                    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2); max-width:400px;
@@ -172,7 +181,7 @@ lnodes <- data.frame(label = styles_col$label[1:6],
               zoom = FALSE,  
               width = 0.20, stepY = 100,
               position = "left",
-              useGroups = FALSE))
+              useGroups = FALSE)
 return(p)
 }
 

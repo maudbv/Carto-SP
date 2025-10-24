@@ -49,8 +49,10 @@ graph_partenaires <- carto_SP_graph(df = SP_acteurs,
                                 groupes_titre = "Type de partenaire",
                                 couleurs_col = "type_participants",
                                 couleurs_label = types_part$court,
+                                selection_col = "type_participants",
+                                selection_titre = "Type de participants",
                                 titre = "Cartographie des partenaires des projets de sciences participatives",
-                                hauteur = "600px")
+                                hauteur = "800px")
 
 # Graph 3: Sankey diagram taxons et milieux : aléatoire, bof ####
 
