@@ -11,4 +11,5 @@ Le script Master.R permet de réaliser l'ensemble des graphes.
 
   # Auteurs
   Scripts R: Maud Bernard-Verdier
+
   Données: Anne Dozière, Alexandra Villarroel-Parada, Alice Couëtil
