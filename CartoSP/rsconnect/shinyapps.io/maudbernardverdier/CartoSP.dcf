@@ -1,0 +1,12 @@
+name: CartoSP
+title: CartoSP
+username: maudbernardverdier
+account: maudbernardverdier
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15927897
+bundleId: 11112708
+url: https://maudbernardverdier.shinyapps.io/CartoSP/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
