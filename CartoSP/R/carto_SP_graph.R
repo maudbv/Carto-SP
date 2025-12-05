@@ -157,7 +157,8 @@ edges_proj$width <- (E(graph2)$weight * 1.5)^1.5
   
     visPhysics(enabled = FALSE) %>%
   
-    visInteraction(navigationButtons = FALSE) %>%
+    visInteraction(navigationButtons = FALSE,
+                   zoomView = FALSE) %>%
   
     visIgraphLayout(layout = "layout.fruchterman.reingold",
                     type = "full") 
